@@ -23,10 +23,17 @@ jobs:
           cache: 'pnpm'
 
       - name: 安装PNPM
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v2
         with:
           version: 8
           run_install: false
+
+      - name: 检查pnpm版本
+        run: pnpm --version
+
+      - name: 手动安装pnpm（Windows）
+        if: matrix.platform == 'windows-latest'
+        run: npm install -g pnpm@8
 
       - name: 安装Rust
         uses: dtolnay/rust-toolchain@stable
@@ -84,4 +91,4 @@ jobs:
           draft: true
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
