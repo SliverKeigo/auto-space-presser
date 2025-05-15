@@ -1,0 +1,37 @@
+# 构建产物
+/dist
+/dist-ssr
+*.local
+
+# 依赖
+/node_modules
+/.pnp
+.pnp.js
+
+# 测试
+/coverage
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# Tauri
+src-tauri/target
+src-tauri/Cargo.lock
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

@@ -1,0 +1,39 @@
+name: 代码检查
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: 安装PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: 安装Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: 安装前端依赖
+        run: pnpm install
+
+      - name: 检查TypeScript类型
+        run: pnpm tsc --noEmit
+
+      - name: 检查Rust代码
+        run: cd src-tauri && cargo clippy -- -D warnings 
