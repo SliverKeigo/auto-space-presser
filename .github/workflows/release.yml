@@ -5,6 +5,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   release:
     strategy:
@@ -63,6 +66,13 @@ jobs:
         run: |
           pnpm tauri build
 
+      - name: 列出构建产物
+        if: matrix.platform == 'macos-latest' || matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          echo "构建产物位置:"
+          find src-tauri/target -name "*.dmg" -o -name "*.app" -o -name "*.msi" -o -name "*.exe" | sort
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
@@ -72,9 +82,15 @@ jobs:
             src-tauri/target/release/bundle/macos/*.app
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
-          if-no-files-found: ignore
+            src-tauri/target/**/*.dmg
+            src-tauri/target/**/*.app
+            src-tauri/target/**/*.msi
+            src-tauri/target/**/*.exe
+          if-no-files-found: warn
 
   publish:
+    permissions:
+      contents: write
     needs: release
     runs-on: ubuntu-latest
     steps:
@@ -86,15 +102,15 @@ jobs:
         with:
           path: artifacts
 
+      - name: 列出下载的构建产物
+        shell: bash
+        run: |
+          echo "下载的构建产物:"
+          find artifacts -type f | sort
+
       - name: 创建发布
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            artifacts/**/*.dmg
-            artifacts/**/*.app
-            artifacts/**/*.msi
-            artifacts/**/*.exe
+          files: "artifacts/**/*"
           draft: true
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
