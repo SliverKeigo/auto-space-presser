@@ -73,7 +73,7 @@ jobs:
           if [ "${{ matrix.platform }}" = "macos-latest" ]; then
             find src-tauri/target -name "*.dmg" | sort
           else
-            find src-tauri/target -name "*.msi" -o -name "AutoSpacePresser*.exe" | grep -v "build-script" | sort
+            find src-tauri/target -name "*.msi" -o -name "*.exe" | grep -v "build-script" | sort
           fi
 
       # 仅收集最终安装程序文件，不包括中间构建文件
@@ -87,11 +87,8 @@ jobs:
             cp src-tauri/target/release/bundle/dmg/*.dmg release_assets/ 2>/dev/null || true
             cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg release_assets/ 2>/dev/null || true
           else
-            # Windows
-            cp src-tauri/target/release/bundle/msi/*.msi release_assets/ 2>/dev/null || true
-            cp src-tauri/target/release/bundle/nsis/AutoSpacePresser*.exe release_assets/ 2>/dev/null || true
-            # 排除build-script文件
-            find release_assets -name "*build-script*" -delete
+            # Windows - 简化路径搜索，复制所有MSI和EXE (非构建脚本)
+            find src-tauri/target/release -name "*.msi" -o -name "*.exe" | grep -v "build-script" | xargs -I{} cp {} release_assets/ 2>/dev/null || true
           fi
           echo "包含的文件:"
           ls -la release_assets/
