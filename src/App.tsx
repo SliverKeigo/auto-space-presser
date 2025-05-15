@@ -10,9 +10,29 @@ function App() {
   const [interval, setInterval] = useState(1000);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [minInterval] = useState(50); // 最小间隔
+  const [platform, setPlatform] = useState<string>("");
 
   useEffect(() => {
+    // 确定当前平台
+    const getPlatform = async () => {
+      try {
+        // 这里获取平台类型
+        const plat = navigator.platform.toLowerCase();
+        if (plat.includes("win")) {
+          setPlatform("windows");
+        } else if (plat.includes("mac")) {
+          setPlatform("macos");
+        } else {
+          setPlatform("other");
+        }
+      } catch (e) {
+        console.error("获取平台失败:", e);
+      }
+    };
+    
+    getPlatform();
+    
     // 获取初始状态
     async function fetchInitialState() {
       try {
@@ -21,9 +41,11 @@ function App() {
         if (currentWindow) {
           const status = await invoke<boolean>("get_status");
           const savedInterval = await invoke<number>("get_interval");
-
+          
           setIsRunning(status);
-          setInterval(savedInterval);
+          if (savedInterval >= minInterval) {
+            setInterval(savedInterval);
+          }
           setError(null);
         } else {
           setError("Tauri 环境未就绪");
@@ -35,9 +57,9 @@ function App() {
         setLoading(false);
       }
     }
-
+    
     fetchInitialState();
-  }, []);
+  }, [minInterval]);
 
   async function toggleAutoPress() {
     try {
@@ -55,7 +77,7 @@ function App() {
       setError(null);
     } catch (error) {
       console.error("操作失败:", error);
-      setError("操作失败，请重试");
+      setError(`操作失败: ${error}`);
     }
   }
   
@@ -65,7 +87,7 @@ function App() {
     <main className="auto-space-container">
       <h1>自动空格按键工具</h1>
       <p className="description">
-        此工具可以在Windows系统中自动按下空格键。
+        此工具可以在{platform === "windows" ? "Windows" : platform === "macos" ? "macOS" : "当前"}系统中自动按下空格键。
         可以设置间隔时间，并且可以随时开启或关闭。
       </p>
 
@@ -77,19 +99,28 @@ function App() {
           
           <div className="control-group">
             <label htmlFor="interval-input">按键间隔 (毫秒):</label>
-            <input
-              id="interval-input"
-              type="number"
-              min="50"
-              value={interval}
-              onChange={(e) => setInterval(parseInt(e.target.value, 10))}
-              disabled={isRunning}
-            />
+            <div className="interval-wrapper">
+              <input
+                id="interval-input"
+                type="number"
+                min={minInterval}
+                value={interval}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  if (!isNaN(val) && val >= minInterval) {
+                    setInterval(val);
+                  }
+                }}
+                disabled={isRunning}
+              />
+              <span className="interval-hint">最小: {minInterval}ms</span>
+            </div>
           </div>
 
           <button 
             className={`toggle-button ${isRunning ? 'running' : ''}`}
             onClick={toggleAutoPress}
+            disabled={loading}
           >
             {isRunning ? '停止' : '开始'}
           </button>
@@ -104,6 +135,11 @@ function App() {
             <p>
               提示: 应用程序最小化后仍会继续运行
             </p>
+            {platform === "windows" && (
+              <p className="platform-note">
+                在Windows系统上，某些应用可能需要管理员权限才能接收模拟按键
+              </p>
+            )}
           </footer>
         </>
       )}

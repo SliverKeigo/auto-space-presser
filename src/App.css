@@ -248,3 +248,23 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+.interval-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.interval-hint {
+  position: absolute;
+  right: 5px;
+  top: -18px;
+  font-size: 0.7rem;
+  color: #999;
+}
+
+.platform-note {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: #e74c3c;
+  text-align: center;
+}

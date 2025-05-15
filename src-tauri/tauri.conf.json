@@ -13,13 +13,20 @@
     "windows": [
       {
         "title": "自动空格按键工具",
-        "width": 800,
-        "height": 600,
-        "resizable": true
+        "width": 400,
+        "height": 300,
+        "resizable": false,
+        "alwaysOnTop": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        "keyboard-input",
+        "window-state-read",
+        "window-state-write",
+        "process-command-api"
+      ]
     }
   },
   "bundle": {
@@ -31,6 +38,27 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "wix": {
+        "fragmentPaths": [],
+        "language": "zh-CN",
+        "template": null,
+        "name": "auto_space_presser",
+        "bannerPath": null,
+        "dialogImagePath": null,
+        "license": null
+      },
+      "nsis": {
+        "languages": ["SimpChinese"],
+        "installerIcon": "icons/icon.ico",
+        "installMode": "currentUser"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256"
+    }
   }
 }
