@@ -58,10 +58,10 @@ mod windows_utils {
             *(&mut input_up.u as *mut INPUT_u as *mut KEYBDINPUT) = k_input_up;
             
             // 准备输入数组
-            let inputs = [input_down, input_up];
+            let mut inputs = [input_down, input_up];
             
             // 发送输入
-            let result = SendInput(inputs.len() as u32, inputs.as_ptr(), size_of::<INPUT>() as i32);
+            let result = SendInput(inputs.len() as u32, inputs.as_mut_ptr(), size_of::<INPUT>() as i32);
             
             if result != inputs.len() as u32 {
                 let error = GetWinError();
