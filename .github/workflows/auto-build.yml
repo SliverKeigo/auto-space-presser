@@ -1,0 +1,120 @@
+name: 自动构建
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: 获取PNPM store路径
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: 设置pnpm缓存
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: 安装Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 安装依赖（macOS）
+        if: matrix.platform == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+
+      - name: 安装前端依赖
+        run: |
+          pnpm install --no-frozen-lockfile
+
+      - name: 构建应用（macOS）
+        if: matrix.platform == 'macos-latest'
+        run: |
+          pnpm tauri build --target universal-apple-darwin
+
+      - name: 构建应用（Windows）
+        if: matrix.platform == 'windows-latest'
+        run: |
+          pnpm tauri build
+
+      - name: 准备构建产物
+        shell: bash
+        id: prepare_assets
+        run: |
+          mkdir -p build_assets
+          if [ "${{ matrix.platform }}" = "macos-latest" ]; then
+            # macOS
+            cp src-tauri/target/release/bundle/dmg/*.dmg build_assets/ 2>/dev/null || true
+            cp src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg build_assets/ 2>/dev/null || true
+          else
+            # Windows
+            find src-tauri/target/release -name "*.msi" -o -name "*.exe" | grep -v "build-script" | xargs -I{} cp {} build_assets/ 2>/dev/null || true
+          fi
+          echo "包含的文件:"
+          ls -la build_assets/
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-space-presser-${{ matrix.platform }}-${{ github.sha }}
+          path: build_assets
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: 创建版本标记
+        id: create_tag
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          COMMIT_HASH="${{ github.sha }}"
+          SHORT_HASH=${COMMIT_HASH:0:8}
+          CURRENT_DATE=$(date '+%Y%m%d-%H%M')
+          echo "TAG_NAME=auto-build-${CURRENT_DATE}-${SHORT_HASH}" >> $GITHUB_ENV
+          echo "创建的标记: auto-build-${CURRENT_DATE}-${SHORT_HASH}"
+
+  notify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 发送构建完成通知
+        if: success()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: builds
+          SLACK_COLOR: good
+          SLACK_ICON: https://github.com/tauri-apps/tauri/raw/dev/app-icon.png
+          SLACK_TITLE: 自动空格按键工具构建完成
+          SLACK_MESSAGE: '构建完成! 构建产物可在 GitHub Actions 页面获取。'
+          SLACK_FOOTER: '由 GitHub Actions 自动生成' 
