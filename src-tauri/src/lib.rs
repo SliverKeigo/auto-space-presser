@@ -5,6 +5,8 @@ use std::thread;
 use std::time::Duration;
 use once_cell::sync::Lazy;
 use tauri::AppHandle;
+
+#[cfg(not(target_os = "windows"))]
 use enigo::KeyboardControllable;
 
 static AUTO_PRESSING: AtomicBool = AtomicBool::new(false);
@@ -18,8 +20,7 @@ mod windows_utils {
         INPUT_u, INPUT, INPUT_KEYBOARD, KEYBDINPUT, 
         KEYEVENTF_KEYUP, VK_SPACE, SendInput,
     };
-    use winapi::um::winbase::GetLastError;
-    use winapi::um::errhandlingapi::GetLastError as GetWinError;
+    use winapi::um::errhandlingapi::GetLastError;
     
     pub fn send_space_key() -> Result<(), String> {
         unsafe {
@@ -64,7 +65,7 @@ mod windows_utils {
             let result = SendInput(inputs.len() as u32, inputs.as_mut_ptr(), size_of::<INPUT>() as i32);
             
             if result != inputs.len() as u32 {
-                let error = GetWinError();
+                let error = GetLastError();
                 return Err(format!("发送按键失败，错误码: {}", error));
             }
         }
