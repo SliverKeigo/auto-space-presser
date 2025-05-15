@@ -20,20 +20,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
       - name: 安装PNPM
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v3
         with:
           version: 8
           run_install: false
 
-      - name: 检查pnpm版本
-        run: pnpm --version
+      - name: 获取PNPM store路径
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: 手动安装pnpm（Windows）
-        if: matrix.platform == 'windows-latest'
-        run: npm install -g pnpm@8
+      - name: 设置pnpm缓存
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 安装Rust
         uses: dtolnay/rust-toolchain@stable
@@ -45,7 +50,8 @@ jobs:
           rustup target add x86_64-apple-darwin
 
       - name: 安装前端依赖
-        run: pnpm install
+        run: |
+          pnpm install --no-frozen-lockfile
 
       - name: 构建应用（macOS）
         if: matrix.platform == 'macos-latest'
