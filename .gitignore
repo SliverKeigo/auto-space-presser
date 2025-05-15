@@ -22,6 +22,8 @@ Thumbs.db
 # Tauri
 src-tauri/target
 src-tauri/Cargo.lock
+src-tauri/target/
+src-tauri/.cargo/
 
 # 环境变量
 .env
