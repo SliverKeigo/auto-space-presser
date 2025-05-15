@@ -66,6 +66,32 @@ jobs:
         run: |
           echo "TAURI_PATH_SEPARATOR=/" >> $GITHUB_ENV
 
+      - name: 检查Tauri配置
+        shell: bash
+        run: |
+          echo "检查capabilities配置..."
+          # 确保keyboard.json存在
+          if [ ! -f "src-tauri/capabilities/keyboard.json" ]; then
+            echo "创建keyboard-input capability配置..."
+            mkdir -p src-tauri/capabilities
+            cat > src-tauri/capabilities/keyboard.json << 'EOL'
+          {
+            "$schema": "../gen/schemas/desktop-schema.json",
+            "identifier": "keyboard-input",
+            "description": "允许应用程序模拟键盘输入",
+            "windows": ["main"],
+            "permissions": [
+              "keyboard:allow-input"
+            ]
+          }
+          EOL
+          fi
+          
+          # 确保tauri.conf.json引用了正确的capabilities
+          if ! grep -q '"capabilities": \[\s*"default",\s*"keyboard-input"' src-tauri/tauri.conf.json; then
+            echo "tauri.conf.json中的capabilities配置可能不正确，请手动检查"
+          fi
+
       - name: 构建应用（macOS）
         if: matrix.platform == 'macos-latest'
         run: |

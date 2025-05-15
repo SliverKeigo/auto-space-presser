@@ -22,10 +22,8 @@
     "security": {
       "csp": null,
       "capabilities": [
-        "keyboard-input",
-        "window-state-read",
-        "window-state-write",
-        "process-command-api"
+        "default",
+        "keyboard-input"
       ]
     }
   },

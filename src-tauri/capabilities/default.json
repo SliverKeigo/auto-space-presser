@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "自动空格按键工具的基本权限",
   "windows": ["main"],
   "permissions": [
     "core:default",
