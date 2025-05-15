@@ -15,7 +15,7 @@
         "title": "自动空格按键工具",
         "width": 400,
         "height": 300,
-        "resizable": false,
+        "resizable": true,
         "alwaysOnTop": false
       }
     ],
